@@ -1,5 +1,7 @@
 use gtk::prelude::*;
-use gtk::{glib, Application, ApplicationWindow, Button, FlowBox, Image};
+use gtk::{
+    glib, Application, ApplicationWindow, Button, FlowBox, Image, PolicyType, ScrolledWindow,
+};
 use walkdir::WalkDir;
 
 pub fn gui() -> glib::ExitCode {
@@ -13,11 +15,7 @@ pub fn gui() -> glib::ExitCode {
 }
 
 fn build_ui(app: &Application) {
-    let container = gtk::Box::new(gtk::Orientation::Vertical, 10);
-
     let wallpaper_dir = "/home/user/Desktop/coding/LinuxWallpaperEngineGUI/431960.o";
-    let image = Image::new();
-    image.set_pixel_size(150);
     let flow_box = FlowBox::new();
 
     for entry in WalkDir::new(wallpaper_dir)
@@ -32,13 +30,23 @@ fn build_ui(app: &Application) {
             })
         {
             let path_str = path.to_str().unwrap();
+            let image = Image::new();
+            image.set_pixel_size(150);
             image.set_from_file(Some(path_str));
             flow_box.append(&image);
             println!("Found wallpaper preview: {}", path_str);
         }
     }
 
-    container.append(&flow_box);
+    flow_box.connect_child_activated(|_, _| {
+        println!("Selected wallpaper preview");
+    });
+
+    let scrolled_window = ScrolledWindow::builder()
+        .hscrollbar_policy(PolicyType::Never)
+        .min_content_width(360)
+        .child(&flow_box)
+        .build();
 
     let button = Button::builder()
         .label("button")
@@ -57,7 +65,7 @@ fn build_ui(app: &Application) {
         .title("Linux Wallpaper Engine")
         .default_width(800)
         .default_height(600)
-        .child(&container)
+        .child(&scrolled_window)
         .build();
 
     window.present();
